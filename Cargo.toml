@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    'crates/webhook'
+
+]
+resolver = '3'
+
