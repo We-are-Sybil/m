@@ -1,3 +1,6 @@
+# This is a gitignore file for a Rust project
+Cargo.lock
+
 # will have compiled files and executables
 debug/
 target/
