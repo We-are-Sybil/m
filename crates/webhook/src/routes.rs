@@ -1,5 +1,5 @@
 use axum::{
-    routing::{get},
+    routing::get,
     Router,
 };
 use tower::ServiceBuilder;
@@ -16,7 +16,7 @@ use crate::{
 
 pub fn create_route(state: AppState) -> Router {
     Router::new()
-        .route("/webhook", get(handlers::webhook::verify_webhook))
+        .route("/webhook", get(handlers::webhook::verify_webhook).post(handlers::webhook::handle_webhook))
         .with_state(state)
         .layer(
             ServiceBuilder::new()
