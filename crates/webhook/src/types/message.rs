@@ -1,73 +1,6 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
-pub struct WebhookVerifyQuery {
-    #[serde(rename = "hub.mode")]
-    pub mode: Option<String>,
-    #[serde(rename = "hub.verify_token")]
-    pub verify_token: Option<String>,
-    #[serde(rename = "hub.challenge")]
-    pub challenge: Option<String>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct WebhookPayload {
-    pub object: String,
-    pub entry: Vec<Entry>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Entry {
-    pub id: String,
-    pub changes: Vec<Change>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Change {
-    pub value: Value,
-    pub field: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Value {
-    pub contacts: Option<Vec<Contact>>,
-    pub messages: Option<Vec<Message>>,
-    pub messaging_product: String,
-    pub metadata: Option<Metadata>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Contact {
-    pub profile: ContactProfile,
-    pub wa_id: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ContactProfile {
-    pub name: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Message {
-    pub id: String,
-    pub from: String,
-    pub timestamp: String,
-    #[serde(rename = "type")]
-    pub message_type: String,
-
-    // Different message types can be handled here
-    pub text: Option<TextMessage>,
-    pub reaction: Option<ReactionMessage>,
-    pub image: Option<MediaMessage>,
-    pub sticker: Option<MediaMessage>,
-    pub location: Option<LocationMessage>,
-    pub contact: Option<Vec<ContactMessage>>,
-    pub interactive: Option<InteractiveMessage>,
-    pub referral: Option<ReferralMessage>,
-    pub error: Option<Vec<MessageError>>,
-    pub context: Option<MessageContext>,
-}
-
+// Basic message types
 #[derive(Deserialize, Debug, Clone)]
 pub struct TextMessage {
     pub body: String,
@@ -95,6 +28,7 @@ pub struct LocationMessage {
     pub address: Option<String>,
 }
 
+// Contact message types
 #[derive(Deserialize, Debug, Clone)]
 pub struct ContactMessage {
     pub addresses: Option<Vec<ContactAddress>>,
@@ -157,6 +91,7 @@ pub struct ContactUrl {
     pub url_type: Option<String>,
 }
 
+// Interactive message types
 #[derive(Deserialize, Debug, Clone)]
 pub struct InteractiveMessage {
     #[serde(rename = "type")]
@@ -178,6 +113,7 @@ pub struct ListReply {
     pub description: Option<String>,
 }
 
+// Referral and error types
 #[derive(Deserialize, Debug, Clone)]
 pub struct ReferralMessage {
     pub source_url: String,
@@ -199,40 +135,7 @@ pub struct MessageError {
     pub description: String,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct Metadata {
-    pub display_phone_number: Option<String>,
-    pub phone_number_id: String,
-}
-
-#[derive(Serialize, Debug)]
-pub struct WhatsAppMessage {
-    pub messaging_product: String,
-    pub to: String,
-    pub text: TextBody,
-    pub context: Option<MessageContext>,
-}
-
-#[derive(Serialize, Debug)]
-pub struct TextBody {
-    pub body: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct MessageContext {
-    pub message_id: String,
-    pub from: Option<String>,
-    pub id: Option<String>,
-}
-
-
-#[derive(Serialize, Debug)]
-pub struct MessageStatus {
-    pub messaging_product: String,
-    pub status: String,
-    pub message_id: String,
-}
-
+// Message type enum and implementation
 #[derive(Debug)]
 pub enum WebhookMessageType {
     Text(TextMessage),
@@ -245,6 +148,8 @@ pub enum WebhookMessageType {
     Referral(ReferralMessage),
     Unknown(Vec<MessageError>),
 }
+
+use super::payload::Message;
 
 impl Message {
     pub fn get_message_type(&self) -> Option<WebhookMessageType> {
