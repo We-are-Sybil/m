@@ -1,0 +1,121 @@
+networks:
+  project-m-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+
+volumes:
+  kafka-data-1:
+  kafka-data-2:
+  kafka-data-3:
+
+services:
+  kafka-1:
+    image: apache/kafka:4.0.0
+    container_name: kafka-1
+    hostname: kafka-1
+    networks:
+      project-m-net:
+        ipv4_address: 192.168.100.10
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    volumes:
+      - kafka-data-1:/var/lib/kafka/data
+      - ./config:/opt/kafka/config:ro
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLE: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0:9092,CONTROLLER://0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
+      KAFKA_NUMBER_OF_PARTITIONS: 12
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: false
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_COMPRESSION_TYPE: zstd
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_NUM_NETWORK_THREADS: 3
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 2G
+
+  kafka-2:
+    image: apache/kafka:4.0.0
+    container_name: kafka-2
+    hostname: kafka-2
+    networks:
+      project-m-net:
+        ipv4_address: 192.168.100.11
+    ports:
+      - "9094:9092"
+      - "9095:9093"
+    volumes:
+      - kafka-data-2:/var/lib/kafka/data
+      - ./config:/opt/kafka/config:ro
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLE: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0:9092,CONTROLLER://0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9094
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
+      KAFKA_NUMBER_OF_PARTITIONS: 12
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: false
+    depends_on:
+      - kafka-1
+    restart: unless-stopped
+
+  kafka-3:
+    image: apache/kafka:4.0.0
+    container_name: kafka-3
+    hostname: kafka-3
+    networks:
+      project-m-net:
+        ipv4_address: 192.168.100.12
+    ports:
+      - "9096:9092"
+      - "9097:9093"
+    volumes:
+      - kafka-data-3:/var/lib/kafka/data
+      - ./config:/opt/kafka/config:ro
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLE: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0:9092,CONTROLLER://0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9096
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
+      KAFKA_NUMBER_OF_PARTITIONS: 12
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: false
+    depends_on:
+      - kafka-1
+      - kafka-2
+    restart: unless-stopped
