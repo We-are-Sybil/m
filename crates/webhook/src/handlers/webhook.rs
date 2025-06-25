@@ -1,14 +1,12 @@
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    Json,
 };
 use crate::{
     state::AppState,
-    types::{WebhookVerifyQuery, WebhookPayload, WhatsAppMessage, TextBody, MessageContext, MessageStatus},
+    types::{WebhookVerifyQuery},
 };
 use tracing::{error, info, warn};
-use reqwest::Client;
 
 pub async fn verify_webhook(
     Query(query): Query<WebhookVerifyQuery>,
