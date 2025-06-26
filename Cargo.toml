@@ -1,7 +1,8 @@
 [workspace]
-members = [
-    'crates/webhook'
-
+members = [ 
+    'crates/kafka-service',
+    'crates/webhook',
+    'crates/common',
 ]
 resolver = '3'
 

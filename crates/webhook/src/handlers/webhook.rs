@@ -5,8 +5,11 @@ use axum::{
 };
 use crate::{
     state::AppState,
-    types::{WebhookVerifyQuery, WebhookPayload, WebhookMessageType},
+    types::{WebhookVerifyQuery, WebhookPayload},
 };
+
+use common::WebhookMessageType;
+
 use tracing::{error, info, warn};
 
 pub async fn verify_webhook(
@@ -84,39 +87,39 @@ pub async fn handle_webhook(
     Ok(StatusCode::OK)
 }
 
-async fn handle_text_message(from: &str, text_msg: &crate::types::TextMessage) {
+async fn handle_text_message(from: &str, text_msg: &common::TextMessage) {
     info!("Handling text message from {}: {}", from, text_msg.body);
 }
 
-async fn handle_reaction_message(from: &str, reaction_msg: &crate::types::ReactionMessage) {
+async fn handle_reaction_message(from: &str, reaction_msg: &common::ReactionMessage) {
     info!("Handling reaction message from {}: {} to message {}", from, reaction_msg.emoji, reaction_msg.message_id);
 }
 
-async fn handle_image_message(from: &str, media_msg: &crate::types::MediaMessage) {
+async fn handle_image_message(from: &str, media_msg: &common::MediaMessage) {
     info!("Handling image message from {}: {:?}", from, media_msg.id);
 }
 
-async fn handle_sticker_message(from: &str, media_msg: &crate::types::MediaMessage) {
+async fn handle_sticker_message(from: &str, media_msg: &common::MediaMessage) {
     info!("Handling sticker message from {}: {:?}", from, media_msg.id);
 }
 
-async fn handle_location_message(from: &str, location_msg: &crate::types::LocationMessage) {
+async fn handle_location_message(from: &str, location_msg: &common::LocationMessage) {
     info!("Handling location message from {}: {}, {}", from, location_msg.latitude, location_msg.longitude);
 }
 
-async fn handle_contact_message(from: &str, contact_msgs: &[crate::types::ContactMessage]) {
+async fn handle_contact_message(from: &str, contact_msgs: &[common::ContactMessage]) {
     info!("Handling contact message from {} with {} contacts", from, contact_msgs.len());
 }
 
-async fn handle_interactive_message(from: &str, interactive_msg: &crate::types::InteractiveMessage) {
+async fn handle_interactive_message(from: &str, interactive_msg: &common::InteractiveMessage) {
     info!("Handling interactive message from {}: type {}", from, interactive_msg.interactive_type);
 }
 
-async fn handle_referral_message(from: &str, referral_msg: &crate::types::ReferralMessage) {
+async fn handle_referral_message(from: &str, referral_msg: &common::ReferralMessage) {
     info!("Handling referral message from {}: {}", from, referral_msg.source_url);
 }
 
-async fn handle_unknown_message(from: &str, errors: &[crate::types::MessageError]) {
+async fn handle_unknown_message(from: &str, errors: &[common::MessageError]) {
     if errors.is_empty() {
         warn!("Handling unknown message type from {}", from);
     } else {
