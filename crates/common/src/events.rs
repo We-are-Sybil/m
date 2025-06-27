@@ -1,3 +1,4 @@
+use super::message_bus::Event;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use crate::message_types::{MessageType, MessageContent};
@@ -63,5 +64,42 @@ impl WebhookEvent {
     pub fn with_metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
+    }
+}
+
+/// Example event that represents when a new message is received via webhook
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MessageReceived {
+    pub message_id: String,
+    pub from_phone: String,
+    pub message_type: String,
+    pub content: String,
+    pub received_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl Event for MessageReceived {
+    const TOPIC: &'static str = "conversation.messages";
+    const VERSION: &'static str = "1.0";
+
+    fn partition_key(&self) -> Option<String> {
+        Some(self.from_phone.clone())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResponseReady {
+    pub original_message_id: String,
+    pub response_content: String,
+    pub response_type: String,
+    pub to_phone: String,
+    pub processed_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl Event for ResponseReady {
+    const TOPIC: &'static str = "conversation.response";
+    const VERSION: &'static str = "1.0";
+
+    fn partition_key(&self) -> Option<String> {
+        Some(self.to_phone.clone())
     }
 }
