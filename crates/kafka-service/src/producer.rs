@@ -1,12 +1,15 @@
 use crate::config::KafkaConfig;
 use anyhow::Result;
-use common::ProcessingError;
+use common::{
+    ProcessingError,
+    AIResponse,
+};
 use rdkafka::{
     config::ClientConfig,
     producer::{FutureProducer, FutureRecord, Producer},
     util::Timeout,
 };
-use tracing::{info, error, warn};
+use tracing::{info, error, debug};
 use std::time::Duration;
 
 
@@ -48,7 +51,7 @@ impl MessageProducer {
             .set("compression.type", "zstd")  // Compress messages to save bandwidth
             .set("batch.size", "65536")  // Batch up to 64KB of messages
             .set("linger.ms", "5")  // Wait up to 5ms to batch messages
-            .set("buffer.memory", "33554432")  // 32MB buffer for pending messages
+            .set("queue.buffering.max.kbytes", "33554432")  // 32MB buffer for pending messages
             
             // Create the producer client
             .create()
@@ -86,9 +89,9 @@ impl MessageProducer {
                 Ok(())
             }
             Err((kafka_error, _owned_message)) => {
-                let error_msg = format!("❌ Failed to send message: {}", kafka_error)
+                let error_msg = format!("❌ Failed to send message: {}", kafka_error);
                 error!("{}", error_msg);
-                Err(ProcessingError::KafkaError(error_msg))
+                Err(ProcessingError::ProducerError(error_msg))
             }
         }
     }
@@ -100,7 +103,7 @@ impl MessageProducer {
     /// However, we still wait for individual delivery confirmations to ensure reliability.
     pub async fn send_batch(&self, responses: Vec<AIResponse>) -> Result<(), ProcessingError> {
         debug!("📦 Sending batch of {} messages to topic {}", responses.len(), self.output_topic);
-        let send_futures: Vec<_> = responses
+        let send_futures: Vec<_> = responses.clone()
             .into_iter()
             .map(|response| self.send_message(response))
             .collect();

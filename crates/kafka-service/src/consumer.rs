@@ -1,17 +1,15 @@
 use crate::{
     config::KafkaConfig,
-}
+};
 use common::{
     WebhookEvent,
     ProcessingError,
 };
 use anyhow::Result;
 use rdkafka::{
-    config::ClientConfig,
-    consumer::{Consumer, StreamConsumer},
-    message::{BorrowedMessage, Message},
-    ClientContext, ConsumerContext,
+    TopicPartitionList, config::ClientConfig, consumer::{BaseConsumer, Consumer, ConsumerContext, StreamConsumer}, message::{BorrowedMessage, Message}, types::RDKafkaRespErr, ClientContext
 };
+use rdkafka;
 use tracing::{info, error, debug, warn};
 use std::time::Duration;
 
@@ -27,15 +25,19 @@ pub struct MessageConsumerContext;
 
 impl ClientContext for MessageConsumerContext {}
 impl ConsumerContext for MessageConsumerContext {
-    fn reblance(
+    fn rebalance(
         &self,
-        native_ptr: *mut rdkafka::bindings::rd_kafka_t,
-        err: rdkafka::error::KafkaResult<()>
-        tpl: &rdkafka::TopicPartitionList
+        _native_ptr: &BaseConsumer<MessageConsumerContext>,
+        err: RDKafkaRespErr,
+        tpl: &mut TopicPartitionList,
     ) {
         match err {
-            Ok(()) => info!("✅ Consumer rebalance successful: {:?}", tpl),
-            Err(e) => error!("❌ Consumer rebalance failed: {}: {:?}", e, tpl),
+            rdkafka::types::RDKafkaRespErr::RD_KAFKA_RESP_ERR_NO_ERROR => {
+                info!("✅ Consumer rebalance successful: {:?}", tpl)
+            }
+            error_code => {
+                error!("❌ Consumer rebalance failed: {:?}: {:?}", error_code, tpl)
+            }
         }
     }
 }
@@ -52,7 +54,7 @@ impl MessageConsumer {
         // Config. the rdkafka consumer
         let consumer: StreamConsumer<MessageConsumerContext> = ClientConfig::new()
             .set("bootstrap.servers", &config.bootstrap_servers)
-            .set("group.id", &config.group_id)
+            .set("group.id", &config.consumer_group_id)
 
             // Offset management ~ controls where to start consuming messages
             .set("auto.offset.reset", "earliest")  // Start from beginning if no offset stored
@@ -93,7 +95,7 @@ impl MessageConsumer {
     ) -> Result<Vec<WebhookEvent>, ProcessingError> {
         debug!("🔄 Consuming batch of up to {} messages from topic: {}", batch_size, self.input_topic);
 
-        let timeout = Duration::from_millis(timeout_ms);
+        let timeout = timeout_ms.clone();
         let mut events = Vec::with_capacity(batch_size);
         let mut messages_to_commit = Vec::new();
 
@@ -122,6 +124,13 @@ impl MessageConsumer {
                 }
             }
         }
+
+        if !messages_to_commit.is_empty() {
+            self.commit_messages(messages_to_commit).await?;
+        }
+
+        debug!("✅ Consumed {} messages from topic: {}", events.len(), self.input_topic);
+        Ok(events)
     }
 
     /// Parse a Kafka message into a WebhookEvent
@@ -134,7 +143,7 @@ impl MessageConsumer {
     }
     
     /// Commit message offsets
-    async fn commit_messages(&self, messages: Vec<BorrowedMessage>) -> Result<(), ProcessingError> {
+    async fn commit_messages(&self, messages: Vec<BorrowedMessage<'_>>) -> Result<(), ProcessingError> {
         for message in messages {
             self.consumer
                 .commit_message(&message, rdkafka::consumer::CommitMode::Async)

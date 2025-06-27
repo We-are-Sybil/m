@@ -31,7 +31,7 @@ impl KafkaConfig {
                 .expect("KAFKA_OUTPUT_TOPIC must be set"),  
 
             batch_size: std::env::var("KAFKA_BATCH_SIZE")
-                unwrap_or_else(|_| "100".to_string())
+                .unwrap_or_else(|_| "100".to_string())
                 .parse()
                 .expect("KAFKA_BATCH_SIZE must be a valid number"),
 
@@ -48,3 +48,4 @@ impl KafkaConfig {
             .map(|s| s.trim())
             .collect()
     }
+}
