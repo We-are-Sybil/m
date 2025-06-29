@@ -102,6 +102,7 @@ pub enum EventBusError {
     SerializationError(String),
     ConnectionError(String),
     TopicNotFound(String),
+    ConfigError(String),
 }
 
 impl fmt::Display for EventBusError {
@@ -112,6 +113,7 @@ impl fmt::Display for EventBusError {
             EventBusError::SerializationError(msg) => write!(f, "Serialization error: {}", msg),
             EventBusError::ConnectionError(msg) => write!(f, "Connection error: {}", msg),
             EventBusError::TopicNotFound(msg) => write!(f, "Topic not found: {}", msg),
+            EventBusError::ConfigError(msg) => write!(f, "Configuration error: {}", msg),
         }
     }
 }
