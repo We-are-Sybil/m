@@ -16,7 +16,7 @@ pub struct MessageReceived {
 }
 
 impl Event for MessageReceived {
-    const TOPIC: &'static str = "conversation.message.received";
+    const TOPIC: &'static str = "conversation.messages";
     const VERSION: &'static str = "1.0";
     /// Partitioning by `from_phone` allows us to group messages from
     /// the same sender together.
@@ -37,7 +37,7 @@ pub struct InteractionReceived {
 }
 
 impl Event for InteractionReceived {
-    const TOPIC: &'static str = "conversation.interaction.received";
+    const TOPIC: &'static str = "conversation.interactions";
     const VERSION: &'static str = "1.0";
     /// Partitioning by `from_phone` allows us to group interactions
     /// from the same sender together.
@@ -63,7 +63,7 @@ pub struct ResponseReady {
 }
 
 impl Event for ResponseReady {
-    const TOPIC: &'static str = "conversation.response.ready";
+    const TOPIC: &'static str = "conversation.responses";
     const VERSION: &'static str = "1.0";
     /// Partitioning by `to_phone` allows us to group responses
     /// to the same recipient together.
@@ -86,7 +86,7 @@ pub struct MessageFailed {
 }
 
 impl Event for MessageFailed {
-    const TOPIC: &'static str = "conversation.message.failed";
+    const TOPIC: &'static str = "conversation.messages.failed";
     const VERSION: &'static str = "1.0";
     /// Partitioning by `phone` allows us to group failures
     /// for the same recipient together.
