@@ -1,5 +1,7 @@
+// crates/webhook/src/state.rs - Updated state with enhanced event bus integration
 use crate::config::AppConfig;
-use common::{KafkaEventBus, EventBusError};
+use common::{EventBus, EventBusError};
+
 use reqwest::Client;
 use std::sync::Arc;
 
