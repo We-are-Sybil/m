@@ -10,6 +10,7 @@ pub use errors::*;
 pub use events::*;
 pub use message_bus::*;
 pub use webhook_types::*;
+pub use kafka_bus::*;
 
 #[cfg(test)]
 mod tests {

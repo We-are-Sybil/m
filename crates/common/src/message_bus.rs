@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::fmt;
+use std::{
+    error::Error,
+    fmt,
+};
 
 /// Trait definin what makes a valid event in the system.
 ///
@@ -219,7 +221,7 @@ pub trait EventBus: Send + Sync {
     ///
     /// This ensures that any pending messages are processed and 
     /// resources are cleanned up properly.
-    async fn health_check(&self) -> Result<(), Self::Error>;
+    async fn shutdown(&self) -> Result<(), Self::Error>;
 }
 
 

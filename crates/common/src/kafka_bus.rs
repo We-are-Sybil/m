@@ -12,7 +12,6 @@ use rdkafka::{
     producer::{FutureProducer, FutureRecord, Producer},
     util::Timeout,
     Message,
-    TopicPartitionList,
 };
 use futures::future::join_all;
 use serde::{
@@ -147,7 +146,7 @@ impl KafkaEventBus {
 
     /// Create a new Kafka consumer with the specified configuration
     ///
-    /// This sets up a consumer with optimized settings for realiable message
+    /// This sets up a consumer with optimized settings for reliable message
     /// processing in a microservices architecture.
     fn create_consumer(&self, consumer_group: &str) -> Result<StreamConsumer, EventBusError> {
         let consumer: StreamConsumer = ClientConfig::new()
@@ -174,7 +173,7 @@ impl KafkaEventBus {
                     format!("Failed to create Kafka consumer: {}", e)
                 )
             )?;
-            
+        Ok(consumer)            
     }
 
     /// Publish an event with retry logic and dead letter queue support
@@ -395,10 +394,13 @@ impl EventBus for KafkaEventBus {
     }
     
     /// Subscribe to events with a single-event handler
-    fn subscribe<T, F>(&self, config: SubscriptionConfig, handler: F) -> impl Future<Output = Result<(), Self::Error>> + Send + '_
+    async fn subscribe<T, F>(&self, config: SubscriptionConfig, handler: F) -> Result<(), Self::Error>
     where
         T: Event,
-        F: Fn(EventEnvelope<T>) -> Result<ProcessingResult, Box<dyn Error + Send + Sync>> + Send + Sync + 'static,
+        F: Fn(EventEnvelope<T>) -> Result<ProcessingResult, Box<dyn Error + Send + Sync>> 
+            + Send 
+            + Sync 
+            + 'static,
     {
         let topic = T::TOPIC;
         let consumer_group = format!("{}-{}", self.config.consumer_group_id, config.consumer_group);
@@ -420,7 +422,7 @@ impl EventBus for KafkaEventBus {
         
         // Clone necessary references for the async task
         let event_bus = Arc::new(self.clone());
-        let mut shutdown_rx = self.shutdown_receiver.clone();
+        let shutdown_rx = self.shutdown_receiver.clone();
         
         // Spawn the consumer loop
         tokio::spawn(async move {
@@ -496,7 +498,10 @@ impl EventBus for KafkaEventBus {
     async fn subscribe_batch<T, F>(&self, _config: SubscriptionConfig, _handler: F) -> Result<(), Self::Error>
     where
         T: Event,
-        F: Fn(Vec<EventEnvelope<T>>) -> Result<Vec<ProcessingResult>, Box<dyn Error + Send + Sync>> + Send + Sync + 'static,
+        F: Fn(Vec<EventEnvelope<T>>) -> Result<Vec<ProcessingResult>, Box<dyn Error + Send + Sync>> 
+            + Send 
+            + Sync 
+            + 'static,
     {
         // TODO: Implement batch processing
         Err(EventBusError::SubscriptionFailed("Batch subscription not yet implemented".to_string()))
@@ -552,6 +557,18 @@ impl EventBus for KafkaEventBus {
         
         info!("✅ Kafka event bus shutdown completed");
         Ok(())
+    }
+}
+
+impl Clone for KafkaEventBus {
+    fn clone(&self) -> Self {
+        Self {
+            producer: self.producer.clone(),
+            config: self.config.clone(),
+            consumers: self.consumers.clone(),
+            shutdown_signal: self.shutdown_signal.clone(),
+            shutdown_receiver: self.shutdown_receiver.clone(),
+        }
     }
 }
 
