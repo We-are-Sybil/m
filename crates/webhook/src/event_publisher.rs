@@ -3,6 +3,7 @@ use common::{
     MessageType, MessageContent, InteractionType, InteractionSelection, FailureType,
     WebhookMessageType, ContactMessage, LocationMessage, TextMessage, MediaMessage,
     ReactionMessage, InteractiveMessage, ReferralMessage, MessageError,
+    KafkaEventBus,
 };
 use std::{
     collections::HashMap,
@@ -15,21 +16,18 @@ use tracing::{debug, error, info, warn};
 /// This service acts as the bridge between WhatsApp's complex webhook format
 /// and our simplified event-driven architecture. It transforms raw webhook
 /// data into business-focused events that other services can easily consume.
-pub struct WebhookEventPublisher<T: EventBus> {
+pub struct WebhookEventPublisher {
     
     /// Event bus for publishing events
-    event_bus: Arc<T>,
+    event_bus: Arc<KafkaEventBus>,
 }
 
-impl<T> WebhookEventPublisher<T> 
-where 
-    T: EventBus<Error = EventBusError>
-{
+impl WebhookEventPublisher {
     /// Create a new webhook event publisher with enhanced event bus
     /// 
     /// Takes an enhanced event bus implementation that provides automatic
     /// retry logic, dead letter queue support, and reliable event delivery.
-    pub fn new(event_bus: Arc<T>) -> Self {
+    pub fn new(event_bus: Arc<KafkaEventBus>) -> Self {
         info!("🔧 Initializing webhook event publisher with enhanced event bus");
         Self { event_bus }
     }

@@ -6,12 +6,15 @@ use axum::{
 use crate::{
     state::AppState,
     types::{WebhookVerifyQuery, WebhookPayload},
+    event_publisher::WebhookEventPublisher,
 };
-
-use common::WebhookMessageType;
 
 use tracing::{error, info, warn};
 
+/// Verify webhook subscription requests from WhatsApp
+///
+/// WhatsApp sends a GET request with specific query parameters to verify
+/// that the webhook endpoint is valid and owned by the user.
 pub async fn verify_webhook(
     Query(query): Query<WebhookVerifyQuery>,
     State(state): State<AppState>,
@@ -19,64 +22,71 @@ pub async fn verify_webhook(
     match (query.mode.as_deref(), &query.verify_token, &query.challenge) {
         (Some("subscribe"), Some(token), Some(challenge)) => {
             if token == &state.config.verify_token {
-                info!("Webhook verification successful");
+                info!("✅ Webhook verification successful");
                 Ok(challenge.clone())
             } else {
-                warn!("Invalid verify token: {}", token);
+                warn!("❌ Invalid verify token: {}", token);
                 Err(StatusCode::FORBIDDEN)
             }
         }
         _ => {
-            error!("Invalid query parameters: {:?}", query);
+            error!("❌ Invalid webhook verification request: {:?}", query);
             Err(StatusCode::BAD_REQUEST)
         }
     }
 }
 
+/// Handle incoming WhatsApp webhook messages and transform them into domain events
+///
+/// THis is the main webhook endpoint that receives all WhatsApp messages, 
+/// interactions,and status updates. It processes each message and publishes
+/// appropriate domain events to Kafka for downstream services to consume.
 pub async fn handle_webhook(
-    State(_): State<AppState>,
+    State(state): State<AppState>,
     Json(payload): Json<WebhookPayload>,
 ) -> Result<StatusCode, StatusCode> {
-    info!("Received webhook payload: {:?}", payload);
+    info!("📨 Received webhook payload with {} entries", payload.entry.len());
 
+    let event_publisher = WebhookEventPublisher::new(state.event_bus.clone());
+
+    // Only process message changes (ignore status changes, etc.)
     for entry in payload.entry {
+        info!("🔄 Processing entry {} with {} changes", entry.id, entry.changes.len());
+
         for change in entry.changes {
+            if change.field != "messages" {
+                warn!("⚠️ Unsupported field in change: {}", change.field);
+                continue;
+            }
+
             if let Some(messages) = change.value.messages {
                 for message in messages {
-                    match message.get_message_type() {
-                        Some(message_type) => {
-                            match message_type {
-                                WebhookMessageType::Text(text_msg) => {
-                                    handle_text_message(&message.from, &text_msg).await;
-                                }
-                                WebhookMessageType::Reaction(reaction_msg) => {
-                                    handle_reaction_message(&message.from, &reaction_msg).await;
-                                }
-                                WebhookMessageType::Image(media_msg) => {
-                                    handle_image_message(&message.from, &media_msg).await;
-                                }
-                                WebhookMessageType::Sticker(media_msg) => {
-                                    handle_sticker_message(&message.from, &media_msg).await;
-                                }
-                                WebhookMessageType::Location(location_msg) => {
-                                    handle_location_message(&message.from, &location_msg).await;
-                                }
-                                WebhookMessageType::Contact(contact_msgs) => {
-                                    handle_contact_message(&message.from, &contact_msgs).await;
-                                }
-                                WebhookMessageType::Interactive(interactive_msg) => {
-                                    handle_interactive_message(&message.from, &interactive_msg).await;
-                                }
-                                WebhookMessageType::Referral(referral_msg) => {
-                                    handle_referral_message(&message.from, &referral_msg).await;
-                                }
-                                WebhookMessageType::Unknown(errors) => {
-                                    handle_unknown_message(&message.from, &errors).await;
-                                }
-                            }
+                    // Extract content message ID if present 
+                    // (for replies/interactions)
+                    let context_message_id = message.context
+                        .as_ref()
+                        .and_then(|ctx| ctx.id.clone());
+
+                    let webhook_message_type = message.get_message_type();
+
+                    // Publish message as a domain event
+                    match event_publisher.process_message(
+                        message.id.clone(),
+                        message.from.clone(),
+                        message.timestamp.clone(),
+                        webhook_message_type, 
+                        context_message_id,
+                    ).await {
+                        Ok(()) => {
+                            info!("✅ Successfully processed message {} from {}", 
+                                  message.id, message.from);
                         }
-                        None => {
-                            warn!("Could not determine message type for message: {:?}", message);
+                        Err(e) => {
+                            error!("❌ Failed to process message {} from {}: {}", 
+                                   message.id, message.from, e);
+                            
+                            // Continue processing other messages even if one fails
+                            // The event publisher handles retries and dead letter queues
                         }
                     }
                 }
@@ -84,46 +94,9 @@ pub async fn handle_webhook(
         }
     }
 
+    // Always return 200 OK to WhatsApp to acknowledge receipt
+    // Even if some message processing failed, we don't want WhatsApp 
+    // to retry the entire webhook payload since failures are handled 
+    // by our retry mechanisms
     Ok(StatusCode::OK)
 }
-
-async fn handle_text_message(from: &str, text_msg: &common::TextMessage) {
-    info!("Handling text message from {}: {}", from, text_msg.body);
-}
-
-async fn handle_reaction_message(from: &str, reaction_msg: &common::ReactionMessage) {
-    info!("Handling reaction message from {}: {} to message {}", from, reaction_msg.emoji, reaction_msg.message_id);
-}
-
-async fn handle_image_message(from: &str, media_msg: &common::MediaMessage) {
-    info!("Handling image message from {}: {:?}", from, media_msg.id);
-}
-
-async fn handle_sticker_message(from: &str, media_msg: &common::MediaMessage) {
-    info!("Handling sticker message from {}: {:?}", from, media_msg.id);
-}
-
-async fn handle_location_message(from: &str, location_msg: &common::LocationMessage) {
-    info!("Handling location message from {}: {}, {}", from, location_msg.latitude, location_msg.longitude);
-}
-
-async fn handle_contact_message(from: &str, contact_msgs: &[common::ContactMessage]) {
-    info!("Handling contact message from {} with {} contacts", from, contact_msgs.len());
-}
-
-async fn handle_interactive_message(from: &str, interactive_msg: &common::InteractiveMessage) {
-    info!("Handling interactive message from {}: type {}", from, interactive_msg.interactive_type);
-}
-
-async fn handle_referral_message(from: &str, referral_msg: &common::ReferralMessage) {
-    info!("Handling referral message from {}: {}", from, referral_msg.source_url);
-}
-
-async fn handle_unknown_message(from: &str, errors: &[common::MessageError]) {
-    if errors.is_empty() {
-        warn!("Handling unknown message type from {}", from);
-    } else {
-        error!("Handling message with errors from {}: {:?}", from, errors);
-    }
-}
-

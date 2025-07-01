@@ -3,6 +3,14 @@ name = "webhook"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "webhook"
+path = "src/main.rs"
+
+[[bin]]
+name = "test_consumer"
+path = "src/bin/test_consumer.rs"
+
 [dependencies]
 anyhow = "1.0.98"
 axum = "0.8.4"

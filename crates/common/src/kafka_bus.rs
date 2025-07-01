@@ -159,12 +159,12 @@ impl KafkaEventBus {
             .set("auto.offset.reset", "earliest")   // Start from the earliest message
             .set("enable.auto.commit", "false")     // Manual offset management
             .set("session.timeout.ms", "30000")     // 30 sec. ession timeout
-            .set("heartbeat.intervals.ms", "3000") // 3 sec. heartbeat
+            .set("heartbeat.interval.ms", "3000")   // 3 sec. heartbeat
             .set("max.poll.interval.ms", "300000")  // 5 min. max poll interval
             
             // Performance settings
             .set("fetch.min.bytes", "1024")         // Minimum bytes to fetch
-            .set("fetch.max.wait.ms", "500")        // Wait up to 500ms for more data
+            .set("fetch.wait.max.ms", "500")        // Wait up to 500ms for more data
             .set("max.partition.fetch.bytes", "1048576") // 1MB per partition
 
             .create()
