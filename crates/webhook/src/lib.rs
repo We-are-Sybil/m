@@ -34,7 +34,7 @@ pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| format!("Failed to initialize Kafka event bus: {}", e))?;
     
     // Wrap in the trait object that our application state expects
-    let event_bus: Arc<dyn EventBus<Error = common::EventBusError> + Send + Sync> = Arc::new(event_bus);
+    let event_bus: Arc<KafkaEventBus> = Arc::new(event_bus);
     
     // Verify event bus connectivity before proceeding
     tracing::info!("🔍 Testing event bus connectivity...");
