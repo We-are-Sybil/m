@@ -124,3 +124,41 @@ services:
         condition: service_healthy
     restart: on-failure
 
+  webhook-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.webhook
+    container_name: webhook-service
+    networks:
+      m-net:
+        ipv4_address: 192.168.100.20
+    ports:
+      - "8000:8000"
+    environment:
+      # Kafka configuration - note the internal network addresses
+      KAFKA_BOOTSTRAP_SERVERS: "m-kafka-1:19092,m-kafka-2:19092,m-kafka-3:19092"
+      KAFKA_CONSUMER_GROUP_ID: "webhook-service"
+      KAFKA_TIMEOUT_MS: "5000"
+      KAFKA_SECURITY_PROTOCOL: "PLAINTEXT"
+      
+      # WhatsApp webhook configuration
+      WEBHOOK_VERIFY_TOKEN: "${WEBHOOK_VERIFY_TOKEN:-dev_verify_token_123}"
+      WEBHOOK_ACCESS_TOKEN: "${WEBHOOK_ACCESS_TOKEN:-dev_access_token_456}"
+      WEBHOOK_API_VERSION: "${WEBHOOK_API_VERSION:-v23.0}"
+      WEBHOOK_PHONE_NUMBER_ID: "${WEBHOOK_PHONE_NUMBER_ID:-106540352242922}"
+      WEBHOOK_MAX_FILE_SIZE_MB: "${WEBHOOK_MAX_FILE_SIZE_MB:-25}"
+      WEBHOOK_HOST: "0.0.0.0"
+      WEBHOOK_PORT: "8000"
+      
+      # Logging configuration
+      RUST_LOG: "info,webhook=debug"
+    depends_on:
+      kafka-init-topics:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/webhook?hub.mode=subscribe&hub.verify_token=${WEBHOOK_VERIFY_TOKEN:-dev_verify_token_123}&hub.challenge=healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
