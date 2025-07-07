@@ -9,6 +9,6 @@
 
 pub mod core;
 pub mod message_types;
-// pub mod builders;
+pub mod builders;
 pub mod responses;
 pub mod validation;
