@@ -7,9 +7,6 @@ edition = "2024"
 name = "whatsapp_client"
 path = "src/main.rs"
 
-[[bin]]
-name = "test_client"
-path = "src/bin/test_client.rs"
 
 [dependencies]
 # Core async runtime and utilities
@@ -44,3 +41,4 @@ nonzero_ext = "0.3.0"
 
 # Common events types and Kafka integration
 common = { path = "../common" }
+regex = "1.11.1"
