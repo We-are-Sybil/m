@@ -4,7 +4,7 @@ pub mod contacts;
 pub mod document;
 pub mod image;
 pub mod interactive;
-// pub mod location;
+pub mod location;
 // pub mod video;
 
 pub use text::TextMessage;
@@ -13,5 +13,5 @@ pub use contacts::ContactMessage;
 pub use document::DocumentMessage;
 pub use image::ImageMessage;
 pub use interactive::InteractiveMessage;
-// pub use location::LocationMessage;
+pub use location::LocationMessage;
 // pub use video::VideoMessage;
