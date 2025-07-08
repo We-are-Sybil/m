@@ -5,14 +5,14 @@ use crate::{
         validate_mime_type, validate_file_size, validate_caption, MediaType
     },
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 /// An image message that can be sent via WhatsApp
 /// 
 /// Image messages display as inline images within the chat conversation.
 /// They can be sent using either uploaded media (recommended) or hosted media.
 /// Images support captions up to 1024 characters.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImageMessage {
     /// Always "whatsapp" for WhatsApp Business API
     messaging_product: String,
@@ -32,7 +32,7 @@ pub struct ImageMessage {
 /// This contains either a media ID (for uploaded images) or a URL (for hosted images).
 /// The media ID approach is recommended for better performance and reliability.
 /// Images can include an optional caption.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct ImageContent {
     /// Media ID for uploaded image (recommended approach)
     #[serde(skip_serializing_if = "Option::is_none")]

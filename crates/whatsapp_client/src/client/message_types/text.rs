@@ -2,14 +2,14 @@ use crate::{
     errors::WhatsAppResult,
     client::validation::{validate_phone_number, validate_text_message},
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 /// A text message that can be sent via WhatsApp
 /// 
 /// This represents a simple text message with optional link preview functionality.
 /// Text messages are the most basic message type and form the foundation for
 /// most conversational interactions.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TextMessage {
     /// Always "whatsapp" for WhatsApp Business API
     messaging_product: String,
@@ -27,7 +27,7 @@ pub struct TextMessage {
 /// Text message content structure
 /// 
 /// This contains the actual message text and optional settings for link previews.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct TextContent {
     /// The message text (up to 4096 characters)
     body: String,

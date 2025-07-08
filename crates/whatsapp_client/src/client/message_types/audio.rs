@@ -5,13 +5,13 @@ use crate::{
         validate_mime_type, validate_file_size, MediaType
     },
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 /// An audio message that can be sent via WhatsApp
 /// 
 /// Audio messages display an audio icon and allow playback within WhatsApp.
 /// They can be sent using either uploaded media (recommended) or hosted media.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AudioMessage {
     /// Always "whatsapp" for WhatsApp Business API
     messaging_product: String,
@@ -30,7 +30,7 @@ pub struct AudioMessage {
 /// 
 /// This contains either a media ID (for uploaded audio) or a URL (for hosted audio).
 /// The media ID approach is recommended for better performance and reliability.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct AudioContent {
     /// Media ID for uploaded audio (recommended approach)
     #[serde(skip_serializing_if = "Option::is_none")]

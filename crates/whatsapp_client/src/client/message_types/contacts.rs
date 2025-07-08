@@ -2,14 +2,14 @@ use crate::{
     errors::{WhatsAppError, WhatsAppResult},
     client::validation::validate_phone_number,
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use chrono::NaiveDate;
 
 /// A contact message that can be sent via WhatsApp
 /// 
 /// Contact messages display rich contact information that users can save
 /// to their phone's contact list or use to start a new conversation.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContactMessage {
     /// Always "whatsapp" for WhatsApp Business API
     messaging_product: String,
@@ -23,7 +23,7 @@ pub struct ContactMessage {
 }
 
 /// Complete contact information structure
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct ContactInfo {
     /// Physical addresses
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -48,7 +48,7 @@ struct ContactInfo {
 }
 
 /// Contact address information
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContactAddress {
     /// Street address
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -74,7 +74,7 @@ pub struct ContactAddress {
 }
 
 /// Contact email information
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContactEmail {
     /// Email address
     pub email: String,
@@ -84,7 +84,7 @@ pub struct ContactEmail {
 }
 
 /// Contact name information
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContactName {
     /// Full formatted name (required)
     pub formatted_name: String,
@@ -106,7 +106,7 @@ pub struct ContactName {
 }
 
 /// Contact organization information
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContactOrganization {
     /// Company name
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -120,7 +120,7 @@ pub struct ContactOrganization {
 }
 
 /// Contact phone information
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContactPhone {
     /// Phone number
     pub phone: String,
@@ -133,7 +133,7 @@ pub struct ContactPhone {
 }
 
 /// Contact URL information
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContactUrl {
     /// Website URL
     pub url: String,

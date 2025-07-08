@@ -2,14 +2,14 @@ use crate::{
     errors::WhatsAppResult,
     client::validation::{validate_phone_number, validate_coordinates},
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 /// A location message that can be sent via WhatsApp
 /// 
 /// Location messages display a map pin with optional name and address information.
 /// They require latitude and longitude coordinates and can include descriptive text
 /// to help users understand what location is being shared.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocationMessage {
     /// Always "whatsapp" for WhatsApp Business API
     messaging_product: String,
@@ -28,7 +28,7 @@ pub struct LocationMessage {
 /// 
 /// Contains the geographic coordinates and optional descriptive information
 /// about the location being shared.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct LocationContent {
     /// Latitude coordinate (-90 to 90)
     latitude: f64,

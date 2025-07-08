@@ -5,14 +5,14 @@ use crate::{
         validate_mime_type, validate_file_size, validate_caption, MediaType
     },
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 /// A video message that can be sent via WhatsApp
 /// 
 /// Video messages display as inline videos within the chat conversation with playback controls.
 /// They can be sent using either uploaded media (recommended) or hosted media.
 /// Videos support captions up to 1024 characters and must use H.264 codec with AAC audio.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VideoMessage {
     /// Always "whatsapp" for WhatsApp Business API
     messaging_product: String,
@@ -32,7 +32,7 @@ pub struct VideoMessage {
 /// This contains either a media ID (for uploaded videos) or a URL (for hosted videos).
 /// The media ID approach is recommended for better performance and reliability.
 /// Videos can include an optional caption.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct VideoContent {
     /// Media ID for uploaded video (recommended approach)
     #[serde(skip_serializing_if = "Option::is_none")]

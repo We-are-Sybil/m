@@ -5,14 +5,14 @@ use crate::{
         validate_mime_type, validate_file_size, validate_caption, MediaType
     },
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 /// A document message that can be sent via WhatsApp
 /// 
 /// Document messages display a document icon and allow download within WhatsApp.
 /// They can be sent using either uploaded media (recommended) or hosted media.
 /// Documents support captions up to 1024 characters.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentMessage {
     /// Always "whatsapp" for WhatsApp Business API
     messaging_product: String,
@@ -32,7 +32,7 @@ pub struct DocumentMessage {
 /// This contains either a media ID (for uploaded documents) or a URL (for hosted documents).
 /// The media ID approach is recommended for better performance and reliability.
 /// Documents can include an optional caption and filename.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct DocumentContent {
     /// Media ID for uploaded document (recommended approach)
     #[serde(skip_serializing_if = "Option::is_none")]

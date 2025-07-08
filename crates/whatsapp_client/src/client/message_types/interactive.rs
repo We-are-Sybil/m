@@ -5,13 +5,13 @@ use crate::{
         validate_header_text, validate_footer_text, validate_text_message, validate_url
     },
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 /// An interactive message that can be sent via WhatsApp
 /// 
 /// Interactive messages provide structured ways for users to respond,
 /// including buttons, lists, call-to-action URLs, and location requests.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InteractiveMessage {
     /// Always "whatsapp" for WhatsApp Business API
     messaging_product: String,
@@ -30,7 +30,7 @@ pub struct InteractiveMessage {
 /// 
 /// This contains the type of interaction and all associated content.
 /// Different interaction types have different required fields.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InteractiveContent {
     /// Type of interactive message
     #[serde(rename = "type")]
@@ -48,7 +48,7 @@ struct InteractiveContent {
 }
 
 /// Header for interactive messages
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InteractiveHeader {
     /// Header type (text, image, video, document)
     #[serde(rename = "type")]
@@ -68,7 +68,7 @@ struct InteractiveHeader {
 }
 
 /// Media reference for headers
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct MediaReference {
     /// Media ID for uploaded media
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -79,21 +79,21 @@ struct MediaReference {
 }
 
 /// Body text for interactive messages
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InteractiveBody {
     /// Body text content
     text: String,
 }
 
 /// Footer text for interactive messages
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InteractiveFooter {
     /// Footer text content
     text: String,
 }
 
 /// Action configuration for interactive messages
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 enum InteractiveAction {
     /// Button actions (up to 3 buttons)
@@ -117,7 +117,7 @@ enum InteractiveAction {
 }
 
 /// Individual button for button-type interactive messages
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InteractiveButton {
     /// Always "reply" for reply buttons
     #[serde(rename = "type")]
@@ -127,7 +127,7 @@ struct InteractiveButton {
 }
 
 /// Button reply configuration
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct ButtonReply {
     /// Unique button identifier
     id: String,
@@ -136,7 +136,7 @@ struct ButtonReply {
 }
 
 /// Section for list-type interactive messages
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InteractiveListSection {
     /// Section title
     title: String,
@@ -145,7 +145,7 @@ struct InteractiveListSection {
 }
 
 /// Row in a list section
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InteractiveListRow {
     /// Unique row identifier
     id: String,
@@ -157,7 +157,7 @@ struct InteractiveListRow {
 }
 
 /// Parameters for call-to-action URL buttons
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct CtaUrlParameters {
     /// Button display text
     display_text: String,
