@@ -25,7 +25,7 @@ use common::message_bus::Event;
 /// the original message context, recipient information, message content, and
 /// metadata for proper message routing and delivery prioritization.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WhatsAppMessageResponse {
+pub struct WhatsAppMessageSend {
     /// ID of the original message that this response is related to
     pub original_message_id: String,
     /// The WhatsApp message to be sent as a response
@@ -36,7 +36,7 @@ pub struct WhatsAppMessageResponse {
     pub priority: ResponsePriority,
 }
 
-impl Event for WhatsAppMessageResponse {
+impl Event for WhatsAppMessageSend {
     const TOPIC: &'static str = "conversation.responses";
     const VERSION: &'static str = "1.0";
     /// Partitioning by `to_phone` allows us to group responses
@@ -56,7 +56,7 @@ impl Event for WhatsAppMessageResponse {
     }
 }
 
-impl WhatsAppMessageResponse {
+impl WhatsAppMessageSend {
     /// Create a new WhatsApp message response
     /// 
     /// The recipient phone number is automatically extracted from the message.
