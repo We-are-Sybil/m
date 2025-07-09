@@ -1,8 +1,11 @@
 use crate::{
     errors::WhatsAppResult,
-    client::validation::{
-        validate_phone_number, validate_media_id, validate_url, 
-        validate_mime_type, validate_file_size, MediaType
+    client::{
+        validation::{
+            validate_phone_number, validate_media_id, validate_url, 
+            validate_mime_type, validate_file_size, MediaType
+        },
+        message_types::mtrait::Message,
     },
 };
 use serde::{Serialize, Deserialize};
@@ -24,6 +27,18 @@ pub struct AudioMessage {
     message_type: String,
     /// Audio content configuration
     audio: AudioContent,
+}
+
+impl Message for AudioMessage {
+    /// Get the recipient phone number
+    fn recipient(&self) -> &str {
+        &self.to
+    }
+
+    /// Get the message type identifier
+    fn message_type(&self) -> &str {
+        "audio"
+    }
 }
 
 /// Audio message content structure
@@ -109,10 +124,6 @@ impl AudioMessage {
         })
     }
     
-    /// Get the recipient phone number
-    pub fn recipient(&self) -> &str {
-        &self.to
-    }
     
     /// Get the media ID if this message uses uploaded media
     pub fn media_id(&self) -> Option<&str> {

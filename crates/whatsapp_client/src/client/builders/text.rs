@@ -174,4 +174,65 @@ mod tests {
         assert_eq!(message1.message(), message2.message());
         assert_eq!(message1.has_preview_enabled(), message2.has_preview_enabled());
     }
+    
+    #[test]
+    fn test_builder_json_format_matches_api() {
+        let message = TextMessageBuilder::new()
+            .to("+16505551234")
+            .message("Hello, world!")
+            .build()
+            .unwrap();
+        
+        let json_output = serde_json::to_string(&message).unwrap();
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"text","text":{"body":"Hello, world!"}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+    
+    #[test]
+    fn test_builder_with_preview_json_format() {
+        let message = TextMessageBuilder::new()
+            .to("+16505551234")
+            .message("Check out: https://example.com")
+            .with_preview()
+            .build()
+            .unwrap();
+        
+        let json_output = serde_json::to_string(&message).unwrap();
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"text","text":{"body":"Check out: https://example.com","preview_url":true}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+    
+    #[test]
+    fn test_builder_without_preview_json_format() {
+        let message = TextMessageBuilder::new()
+            .to("+16505551234")
+            .message("No preview")
+            .without_preview()
+            .build()
+            .unwrap();
+        
+        let json_output = serde_json::to_string(&message).unwrap();
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"text","text":{"body":"No preview","preview_url":false}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+    
+    #[test]
+    fn test_builder_and_direct_create_same_json() {
+        let builder_message = TextMessageBuilder::new()
+            .to("+16505551234")
+            .message("Test message")
+            .with_preview()
+            .build()
+            .unwrap();
+        
+        let direct_message = TextMessage::with_preview("+16505551234", "Test message").unwrap();
+        
+        let builder_json = serde_json::to_string(&builder_message).unwrap();
+        let direct_json = serde_json::to_string(&direct_message).unwrap();
+        
+        assert_eq!(builder_json, direct_json);
+    }
 }

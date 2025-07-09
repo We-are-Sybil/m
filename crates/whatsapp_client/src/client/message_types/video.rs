@@ -1,8 +1,11 @@
 use crate::{
     errors::WhatsAppResult,
-    client::validation::{
-        validate_phone_number, validate_media_id, validate_url, 
-        validate_mime_type, validate_file_size, validate_caption, MediaType
+    client::{
+        validation::{
+            validate_phone_number, validate_media_id, validate_url, 
+            validate_mime_type, validate_file_size, validate_caption, MediaType
+        },
+        message_types::mtrait::Message,
     },
 };
 use serde::{Serialize, Deserialize};
@@ -25,6 +28,18 @@ pub struct VideoMessage {
     message_type: String,
     /// Video content configuration
     video: VideoContent,
+}
+
+impl Message for VideoMessage {
+    /// Get the recipient phone number
+    fn recipient(&self) -> &str {
+        &self.to
+    }
+
+    /// Get the message type identifier
+    fn message_type(&self) -> &str {
+        "video"
+    }
 }
 
 /// Video message content structure
@@ -132,11 +147,6 @@ impl VideoMessage {
         validate_caption(caption)?;
         self.video.caption = Some(caption.to_string());
         Ok(self)
-    }
-    
-    /// Get the recipient phone number
-    pub fn recipient(&self) -> &str {
-        &self.to
     }
     
     /// Get the media ID if this message uses uploaded media

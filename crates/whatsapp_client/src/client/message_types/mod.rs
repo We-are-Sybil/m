@@ -1,3 +1,5 @@
+pub mod mtrait;
+
 pub mod text;
 pub mod audio;
 pub mod contacts;
@@ -7,6 +9,7 @@ pub mod interactive;
 pub mod location;
 pub mod video;
 
+pub use mtrait::Message;
 pub use text::TextMessage;
 pub use audio::AudioMessage;
 pub use contacts::ContactMessage;

@@ -1,8 +1,11 @@
 use crate::{
     errors::WhatsAppResult,
-    client::validation::{
-        validate_phone_number, validate_media_id, validate_url, 
-        validate_mime_type, validate_file_size, validate_caption, MediaType
+    client::{
+        validation::{
+            validate_phone_number, validate_media_id, validate_url, 
+            validate_mime_type, validate_file_size, validate_caption, MediaType
+        },
+        message_types::mtrait::Message,
     },
 };
 use serde::{Serialize, Deserialize};
@@ -25,6 +28,17 @@ pub struct DocumentMessage {
     message_type: String,
     /// Document content configuration
     document: DocumentContent,
+}
+
+impl Message for DocumentMessage {
+    /// Get the recipient phone number
+    fn recipient(&self) -> &str {
+        &self.to
+    }
+    /// Get the message type identifier
+    fn message_type(&self) -> &str {
+        "document"
+    }
 }
 
 /// Document message content structure
@@ -157,10 +171,6 @@ impl DocumentMessage {
         self
     }
     
-    /// Get the recipient phone number
-    pub fn recipient(&self) -> &str {
-        &self.to
-    }
     
     /// Get the media ID if this message uses uploaded media
     pub fn media_id(&self) -> Option<&str> {

@@ -1,6 +1,9 @@
 use crate::{
     errors::WhatsAppResult,
-    client::validation::{validate_phone_number, validate_text_message},
+    client::{
+        validation::{validate_phone_number, validate_text_message},
+        message_types::mtrait::Message,
+    },
 };
 use serde::{Serialize, Deserialize};
 
@@ -22,6 +25,19 @@ pub struct TextMessage {
     message_type: String,
     /// Text content and settings
     text: TextContent,
+}
+
+impl Message for TextMessage {
+    /// Get the recipient phone number
+    fn recipient(&self) -> &str {
+        &self.to
+    }
+
+    /// Get the message type identifier
+    fn message_type(&self) -> &str {
+        "text"
+    }
+    
 }
 
 /// Text message content structure
@@ -93,11 +109,6 @@ impl TextMessage {
         let mut text_message = Self::new(to, message)?;
         text_message.text.preview_url = Some(false);
         Ok(text_message)
-    }
-    
-    /// Get the recipient phone number
-    pub fn recipient(&self) -> &str {
-        &self.to
     }
     
     /// Get the message text
@@ -195,5 +206,35 @@ mod tests {
         
         let message = result.unwrap();
         assert_eq!(message.message_length(), 4096);
+    }
+
+    #[test]
+    fn test_text_message_json_format_matches_api() {
+        let message = TextMessage::new("+16505551234", "Hello, world!").unwrap();
+        let json_output = serde_json::to_string(&message).unwrap();
+        
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"text","text":{"body":"Hello, world!"}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+    
+    #[test]
+    fn test_text_message_with_preview_json_format() {
+        let message = TextMessage::with_preview("+16505551234", "Check out: https://example.com").unwrap();
+        let json_output = serde_json::to_string(&message).unwrap();
+        
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"text","text":{"body":"Check out: https://example.com","preview_url":true}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+    
+    #[test]
+    fn test_text_message_without_preview_json_format() {
+        let message = TextMessage::without_preview("+16505551234", "No preview").unwrap();
+        let json_output = serde_json::to_string(&message).unwrap();
+        
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"text","text":{"body":"No preview","preview_url":false}}"#;
+        
+        assert_eq!(json_output, expected_json);
     }
 }

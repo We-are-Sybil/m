@@ -1,8 +1,11 @@
 use crate::{
     errors::WhatsAppResult,
-    client::validation::{
-        validate_phone_number, validate_media_id, validate_url, 
-        validate_mime_type, validate_file_size, validate_caption, MediaType
+    client::{
+        validation::{
+            validate_phone_number, validate_media_id, validate_url, 
+            validate_mime_type, validate_file_size, validate_caption, MediaType
+        },
+        message_types::mtrait::Message,
     },
 };
 use serde::{Serialize, Deserialize};
@@ -25,6 +28,18 @@ pub struct ImageMessage {
     message_type: String,
     /// Image content configuration
     image: ImageContent,
+}
+
+impl Message for ImageMessage {
+    /// Get the recipient phone number
+    fn recipient(&self) -> &str {
+        &self.to
+    }
+
+    /// Get the message type identifier
+    fn message_type(&self) -> &str {
+        "image"
+    }
 }
 
 /// Image message content structure
@@ -132,11 +147,6 @@ impl ImageMessage {
         validate_caption(caption)?;
         self.image.caption = Some(caption.to_string());
         Ok(self)
-    }
-    
-    /// Get the recipient phone number
-    pub fn recipient(&self) -> &str {
-        &self.to
     }
     
     /// Get the media ID if this message uses uploaded media

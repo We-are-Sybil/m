@@ -588,7 +588,7 @@ mod tests {
                 .add_list_row("laptops", "Laptops", "Business and gaming")
             .add_list_section("Clothing")
                 .add_simple_list_row("mens", "Men's Clothing")
-                .add_simple_list_row("womens", "Women's Clothing");
+                .add_simple_list_row("women", "Women's Clothing");
         
         // Verify the complex nested structure was built correctly
         assert_eq!(builder.list_button_text, Some("Browse Products".to_string()));
@@ -856,5 +856,108 @@ mod tests {
         assert_eq!(builder.list_sections[2].title, "Section 3");
         assert_eq!(builder.list_sections[2].rows.len(), 1);
         assert_eq!(builder.list_sections[2].rows[0].2, Some("Third section".to_string()));
+    }
+
+        #[test]
+    fn test_builder_button_message_json_format() {
+        let message = InteractiveMessageBuilder::new()
+            .to("+16505551234")
+            .body("Would you like to proceed?")
+            .add_button("yes", "Yes")
+            .add_button("no", "No")
+            .build()
+            .unwrap();
+        
+        let json_output = serde_json::to_string(&message).unwrap();
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"interactive","interactive":{"type":"button","body":{"text":"Would you like to proceed?"},"action":{"buttons":[{"type":"reply","reply":{"id":"yes","title":"Yes"}},{"type":"reply","reply":{"id":"no","title":"No"}}]}}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+
+    #[test]
+    fn test_builder_list_message_json_format() {
+        let message = InteractiveMessageBuilder::new()
+            .to("+16505551234")
+            .body("Select a product category:")
+            .list_button("Browse Products")
+            .add_list_section("Electronics")
+                .add_list_row("phones", "Smartphones", "Latest models available")
+                .add_list_row("laptops", "Laptops", "Business and gaming options")
+            .add_list_section("Clothing")
+                .add_list_row("mens", "Men's Clothing", "Shirts, pants, accessories")
+                .add_list_row("women", "Women's Clothing", "Dresses, tops, accessories")
+            .build()
+            .unwrap();
+        
+        let json_output = serde_json::to_string(&message).unwrap();
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"interactive","interactive":{"type":"list","body":{"text":"Select a product category:"},"action":{"button":"Browse Products","sections":[{"title":"Electronics","rows":[{"id":"phones","title":"Smartphones","description":"Latest models available"},{"id":"laptops","title":"Laptops","description":"Business and gaming options"}]},{"title":"Clothing","rows":[{"id":"mens","title":"Men's Clothing","description":"Shirts, pants, accessories"},{"id":"women","title":"Women's Clothing","description":"Dresses, tops, accessories"}]}]}}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+
+    #[test]
+    fn test_builder_list_message_simple_rows_json_format() {
+        let message = InteractiveMessageBuilder::new()
+            .to("+16505551234")
+            .body("Choose an option:")
+            .list_button("Select")
+            .add_list_section("Options")
+                .add_simple_list_row("yes", "Yes")
+                .add_simple_list_row("no", "No")
+            .build()
+            .unwrap();
+        
+        let json_output = serde_json::to_string(&message).unwrap();
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"interactive","interactive":{"type":"list","body":{"text":"Choose an option:"},"action":{"button":"Select","sections":[{"title":"Options","rows":[{"id":"yes","title":"Yes"},{"id":"no","title":"No"}]}]}}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+
+    #[test]
+    fn test_builder_cta_url_message_json_format() {
+        let message = InteractiveMessageBuilder::new()
+            .to("+16505551234")
+            .body("Check out our new website for exclusive deals!")
+            .cta_url("Visit Website", "https://example.com")
+            .build()
+            .unwrap();
+        
+        let json_output = serde_json::to_string(&message).unwrap();
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"interactive","interactive":{"type":"cta_url","body":{"text":"Check out our new website for exclusive deals!"},"action":{"name":"cta_url","parameters":{"display_text":"Visit Website","url":"https://example.com"}}}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+
+    #[test]
+    fn test_builder_location_request_json_format() {
+        let message = InteractiveMessageBuilder::new()
+            .to("+16505551234")
+            .body("Let's start with your pickup. You can either manually enter an address or share your current location.")
+            .request_location()
+            .build()
+            .unwrap();
+        
+        let json_output = serde_json::to_string(&message).unwrap();
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"interactive","interactive":{"type":"location_request_message","body":{"text":"Let's start with your pickup. You can either manually enter an address or share your current location."},"action":{"name":"send_location"}}}"#;
+        
+        assert_eq!(json_output, expected_json);
+    }
+
+    #[test]
+    fn test_builder_with_header_and_footer_json_format() {
+        let message = InteractiveMessageBuilder::new()
+            .to("+16505551234")
+            .header("Important Notice")
+            .body("Your subscription expires in 3 days. Would you like to renew?")
+            .footer("Auto-renewal available")
+            .add_button("renew", "Renew Now")
+            .add_button("remind", "Remind Later")
+            .build()
+            .unwrap();
+        
+        let json_output = serde_json::to_string(&message).unwrap();
+        let expected_json = r#"{"messaging_product":"whatsapp","recipient_type":"individual","to":"+16505551234","type":"interactive","interactive":{"type":"button","header":{"type":"text","text":"Important Notice"},"body":{"text":"Your subscription expires in 3 days. Would you like to renew?"},"footer":{"text":"Auto-renewal available"},"action":{"buttons":[{"type":"reply","reply":{"id":"renew","title":"Renew Now"}},{"type":"reply","reply":{"id":"remind","title":"Remind Later"}}]}}}"#;
+        
+        assert_eq!(json_output, expected_json);
     }
 }

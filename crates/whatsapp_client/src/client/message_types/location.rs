@@ -1,6 +1,9 @@
 use crate::{
     errors::WhatsAppResult,
-    client::validation::{validate_phone_number, validate_coordinates},
+    client::{
+        validation::{validate_phone_number, validate_coordinates},
+        message_types::mtrait::Message,
+    },
 };
 use serde::{Serialize, Deserialize};
 
@@ -22,6 +25,19 @@ pub struct LocationMessage {
     message_type: String,
     /// Location content configuration
     location: LocationContent,
+}
+
+impl Message for LocationMessage {
+    /// Get the recipient phone number
+    fn recipient(&self) -> &str {
+        &self.to
+    }
+
+    /// Get the message type identifier
+    fn message_type(&self) -> &str {
+        "location"
+    }
+    
 }
 
 /// Location message content structure
@@ -177,11 +193,6 @@ impl LocationMessage {
     pub fn with_location_address(mut self, address: &str) -> Self {
         self.location.address = Some(address.to_string());
         self
-    }
-    
-    /// Get the recipient phone number
-    pub fn recipient(&self) -> &str {
-        &self.to
     }
     
     /// Get the latitude coordinate

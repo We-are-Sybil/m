@@ -1,6 +1,9 @@
 use crate::{
     errors::{WhatsAppError, WhatsAppResult},
-    client::validation::validate_phone_number,
+    client::{
+        validation::validate_phone_number,
+        message_types::mtrait::Message,
+    },
 };
 use serde::{Serialize, Deserialize};
 use chrono::NaiveDate;
@@ -20,6 +23,18 @@ pub struct ContactMessage {
     message_type: String,
     /// Contact information
     contacts: Vec<ContactInfo>,
+}
+
+impl Message for ContactMessage {
+    /// Get the recipient phone number
+    fn recipient(&self) -> &str {
+        &self.to
+    }
+
+    /// Get the message type identifier
+    fn message_type(&self) -> &str {
+        "contacts"
+    }
 }
 
 /// Complete contact information structure
@@ -261,11 +276,6 @@ impl ContactMessage {
             contact.birthday = Some(birthday.to_string());
         }
         Ok(self)
-    }
-    
-    /// Get the recipient phone number
-    pub fn recipient(&self) -> &str {
-        &self.to
     }
     
     /// Get the contact's formatted name

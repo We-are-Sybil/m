@@ -1,14 +1,20 @@
 use crate::{
     config::WhatsAppClientConfig,
     errors::{WhatsAppError, WhatsAppResult, WhatsAppApiErrorResponse},
-    client::responses::WhatsAppMessageResponse,
+    client::{
+        responses::WhatsAppMessageResponse,
+        
+        message_types::{
+            WhatsAppMessage,
+            Message,
+        },
+    },
 };
 use reqwest::{
     Client, 
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE}
 };
 use serde::Serialize;
-use serde_json::Value;
 use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{debug, error, info, warn};
@@ -111,18 +117,17 @@ impl WhatsAppClient {
     /// 
     /// The payload should be any struct that implements Serialize and
     /// matches WhatsApp's API format for the specific message type.
-    pub async fn send_message<T>(&self, payload: T) -> WhatsAppResult<WhatsAppMessageResponse>
-    where
-        T: Serialize + std::fmt::Debug,
-    {
-        debug!("Sending message payload: {:?}", payload);
-        
-        // Convert payload to JSON Value for consistent handling
-        let json_payload = serde_json::to_value(payload)
-            .map_err(WhatsAppError::SerializationError)?;
-        
-        // Send with retry logic
-        self.send_message_with_retry(json_payload).await
+    pub async fn send_message(&self, payload: WhatsAppMessage) -> WhatsAppResult<WhatsAppMessageResponse> {
+        match payload {
+            WhatsAppMessage::Text(msg) => self.send_message_with_retry(&msg).await,
+            WhatsAppMessage::Audio(msg) => self.send_message_with_retry(&msg).await,
+            WhatsAppMessage::Contact(msg) => self.send_message_with_retry(&msg).await,
+            WhatsAppMessage::Document(msg) => self.send_message_with_retry(&msg).await,
+            WhatsAppMessage::Image(msg) => self.send_message_with_retry(&msg).await,
+            WhatsAppMessage::Interactive(msg) => self.send_message_with_retry(&msg).await,
+            WhatsAppMessage::Location(msg) => self.send_message_with_retry(&msg).await,
+            WhatsAppMessage::Video(msg) => self.send_message_with_retry(&msg).await,
+        }
     }
     
     /// Core retry logic for message sending
@@ -130,14 +135,16 @@ impl WhatsAppClient {
     /// This implements intelligent retry with exponential backoff.
     /// Different error types get different retry treatments based on
     /// whether they're likely to succeed on retry.
-    async fn send_message_with_retry(&self, payload: Value) -> WhatsAppResult<WhatsAppMessageResponse> {
+    async fn send_message_with_retry<T>(&self, payload: &T) -> WhatsAppResult<WhatsAppMessageResponse> 
+        where T: Message + Serialize
+    {
         for attempt in 1..=self.config.max_retry_attempts {
             // Wait for rate limiter - this ensures we don't exceed WhatsApp's limits
             self.rate_limiter.until_ready().await;
             
             debug!("Attempt {} of {} for message send", attempt, self.config.max_retry_attempts);
             
-            match self.send_message_once(&payload).await {
+            match self.send_message_once(payload).await {
                 Ok(response) => {
                     debug!("Message sent successfully on attempt {}", attempt);
                     return Ok(response);
@@ -173,11 +180,16 @@ impl WhatsAppClient {
     /// 
     /// This method focuses purely on HTTP communication with WhatsApp's API.
     /// All retry logic is handled at a higher level.
-    async fn send_message_once(&self, payload: &Value) -> WhatsAppResult<WhatsAppMessageResponse> {
+    async fn send_message_once<T>(&self, payload: &T) -> WhatsAppResult<WhatsAppMessageResponse> 
+        where T: Message + serde::Serialize
+    {
+        // Serialize the payload to JSON
+        let json_payload = serde_json::to_value(&payload)
+            .map_err(WhatsAppError::SerializationError)?;
         let response = self.http_client
             .post(&self.base_url)
             .headers(self.default_headers.clone())
-            .json(payload)
+            .json(&json_payload)
             .send()
             .await?;
         
