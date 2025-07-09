@@ -1,0 +1,59 @@
+FROM rust:latest AS builder
+
+RUN apt-get update && apt-get install -y \
+    cmake \
+    libssl-dev \
+    pkg-config \
+    libsasl2-dev \
+    build-essential \
+    wget \
+    zlib1g-dev \
+    liblz4-dev \
+    libzstd-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN cd /tmp && \
+    wget https://github.com/confluentinc/librdkafka/archive/v2.3.0.tar.gz && \
+    tar -xzf v2.3.0.tar.gz && \
+    cd librdkafka-2.3.0 && \
+    ./configure --prefix=/usr --enable-ssl --enable-sasl && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig && \
+    cd / && rm -rf /tmp/librdkafka-2.3.0 /tmp/v2.3.0.tar.gz
+
+WORKDIR /app
+
+COPY Cargo.toml ./
+COPY crates/ ./crates/
+
+RUN cargo build --release --bin whatsapp_client
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    libsasl2-2 \
+    curl \
+    zlib1g \
+    liblz4-1 \
+    libzstd1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/lib/librdkafka.so* /usr/lib/
+COPY --from=builder /usr/lib/librdkafka++.so* /usr/lib/
+
+RUN ldconfig
+
+RUN useradd -r -s /bin/false whatsapp_client
+
+COPY --from=builder /app/target/release/whatsapp_client /usr/local/bin/whatsapp_client
+
+RUN chown whatsapp_client:whatsapp_client /usr/local/bin/whatsapp_client
+
+USER whatsapp_client
+
+EXPOSE 8000
+
+CMD ["webhook"]
