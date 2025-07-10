@@ -1,0 +1,12 @@
+[project]
+name = "m"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "geopandas>=1.1.1",
+    "httpx>=0.28.1",
+    "pydantic>=2.11.5",
+    "shapely>=2.1.1",
+]
