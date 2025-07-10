@@ -162,3 +162,30 @@ services:
       retries: 5
       start_period: 60s
     restart: unless-stopped
+
+  whatsapp-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.whatsapp_client
+    container_name: whatsapp-client
+    networks:
+      m-net:
+        ipv4_address: 192.168.100.21
+    environment:
+      # Kafka configuration - note the internal network addresses
+      KAFKA_BOOTSTRAP_SERVERS: "m-kafka-1:19092,m-kafka-2:19092,m-kafka-3:19092"
+      KAFKA_CONSUMER_GROUP_ID: "whatsapp-client"
+      KAFKA_TIMEOUT_MS: "5000"
+      KAFKA_SECURITY_PROTOCOL: "PLAINTEXT"
+      
+      # WhatsApp API configuration
+      WHATSAPP_ACCESS_TOKEN: "${WHATSAPP_ACCESS_TOKEN:-dev_access_token_456}"
+      WHATSAPP_API_VERSION: "${WHATSAPP_API_VERSION:-v23.0}"
+      WHATSAPP_PHONE_NUMBER_ID: "${WHATSAPP_PHONE_NUMBER_ID:-106540352242922}"
+      
+      # Logging configuration
+      RUST_LOG: "info,whatsapp_client=debug"
+    depends_on:
+      kafka-init-topics:
+        condition: service_completed_successfully
+    restart: unless-stopped

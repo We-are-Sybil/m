@@ -13,14 +13,33 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN cd /tmp && \
-    wget https://github.com/confluentinc/librdkafka/archive/v2.3.0.tar.gz && \
-    tar -xzf v2.3.0.tar.gz && \
-    cd librdkafka-2.3.0 && \
+    wget https://github.com/confluentinc/librdkafka/archive/v2.10.0.tar.gz && \
+    tar -xzf v2.10.0.tar.gz && \
+    cd librdkafka-2.10.0 && \
     ./configure --prefix=/usr --enable-ssl --enable-sasl && \
     make -j$(nproc) && \
     make install && \
     ldconfig && \
-    cd / && rm -rf /tmp/librdkafka-2.3.0 /tmp/v2.3.0.tar.gz
+    cd / && rm -rf /tmp/librdkafka-2.10.0 /tmp/v2.10.0.tar.gz
+
+# Create pkg-config file for librdkafka
+RUN mkdir -p /usr/lib/pkgconfig && \
+    cat > /usr/lib/pkgconfig/rdkafka.pc << 'EOF'
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: librdkafka
+Description: The Apache Kafka C/C++ library
+Version: 2.10.0
+Libs: -L${libdir} -lrdkafka
+Libs.private: -lssl -lcrypto -lsasl2 -lz -lzstd -llz4 -lpthread
+Cflags: -I${includedir}
+EOF
+
+# Set PKG_CONFIG_PATH to include our custom pkg-config file
+ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig:$PKG_CONFIG_PATH
 
 WORKDIR /app
 
@@ -54,6 +73,4 @@ RUN chown whatsapp_client:whatsapp_client /usr/local/bin/whatsapp_client
 
 USER whatsapp_client
 
-EXPOSE 8000
-
-CMD ["webhook"]
+CMD ["whatsapp_client"]
